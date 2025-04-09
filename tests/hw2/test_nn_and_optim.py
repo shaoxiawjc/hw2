@@ -1,10 +1,8 @@
 import sys
-
 sys.path.append("./python")
 import numpy as np
 import needle as ndl
 import needle.nn as nn
-
 sys.path.append("./apps")
 from mlp_resnet import *
 
@@ -550,8 +548,8 @@ def test_op_logsumexp_forward_5():
     )
 
 
-def test_op_logsumexp_backward_1():
-    np.testing.assert_allclose(
+    def test_op_logsumexp_backward_1():
+        np.testing.assert_allclose(
         logsumexp_backward((3, 1), (1,)),
         np.array([[1.0], [7.3], [9.9]], dtype=np.float32),
         rtol=1e-5,

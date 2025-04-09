@@ -10,12 +10,13 @@ import numpy as array_api
 class LogSoftmax(TensorOp):
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        Z -= Z.max(-1, keepdims=True)
+        return Z - array_api.log(array_api.exp(Z).sum(-1, keepdims=True))
         ### END YOUR SOLUTION
 
-    def gradient(self, out_grad, node):
+    def gradient(self, out_grad: Tensor, node: Tensor):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return out_grad - exp(node) * summation(out_grad, -1, keepdims=True)
         ### END YOUR SOLUTION
 
 
@@ -29,13 +30,22 @@ class LogSumExp(TensorOp):
 
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        max_z = array_api.max(Z, axis=self.axes, keepdims=True)
+        self.max_z = max_z
+        return array_api.log(array_api.sum(array_api.exp(Z - max_z), axis=self.axes)) + max_z.squeeze()
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        ### END YOUR SOLUTION
+        if self.axes is None:
+            self.axes = tuple(range(len(node.inputs[0].shape)))
+        z = node.inputs[0]
+        shape = [1 if i in self.axes else z.shape[i] for i in range(len(z.shape))]
+        gradient = exp(z - node.reshape(shape).broadcast_to(z.shape))
+        return out_grad.reshape(shape).broadcast_to(z.shape)*gradient
+
+
+
 
 
 def logsumexp(a, axes=None):

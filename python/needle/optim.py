@@ -1,7 +1,7 @@
 """Optimization module"""
 import needle as ndl
 import numpy as np
-
+from collections import defaultdict
 
 class Optimizer:
     def __init__(self, params):
@@ -20,12 +20,28 @@ class SGD(Optimizer):
         super().__init__(params)
         self.lr = lr
         self.momentum = momentum
-        self.u = {}
+        self.u = defaultdict(lambda: 0.0)
         self.weight_decay = weight_decay
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        # for param in self.params:
+            
+        #     if param.grad is None:
+        #         continue
+        #     grad  = self.u.get(param, 0) * self.momentum + (1-self.momentum) * (param.grad.data + self.weight_decay * param.data)
+        #     grad = ndl.Tensor(grad, dtype = param.dtype)
+        #     self.u[param] = grad
+        #     param.data =  param.data - self.lr * grad
+        for param in self.params:
+            if param.grad is None:
+                continue
+            grad  = self.u.get(param, 0) * self.momentum + (1-self.momentum) * (param.grad.data + self.weight_decay * param.data)
+            grad = ndl.Tensor(grad, dtype = param.dtype)
+            self.u[param] = grad
+            param.data =  param.data - self.lr * grad
+        
         ### END YOUR SOLUTION
 
     def clip_grad_norm(self, max_norm=0.25):
@@ -60,5 +76,13 @@ class Adam(Optimizer):
 
     def step(self):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        ### END YOUR SOLUTION
+        self.t += 1
+        for param in self.params:
+            grad = param.grad.detach() + self.weight_decay * param.detach()
+            self.m[param] = self.beta1 * self.m.get(param, 0) + (1 - self.beta1) * grad
+            self.v[param] = self.beta2 * self.v.get(param, 0) + (1 - self.beta2) * (grad ** 2)
+            m_t1_hat = self.m[param] / (1 - self.beta1 ** (self.t))
+            v_t1_hat = self.v[param] / (1 - self.beta2 ** (self.t))
+            param.cached_data -= (self.lr * m_t1_hat / ((v_t1_hat ** 0.5) + self.eps)).cached_data
+                
+        
